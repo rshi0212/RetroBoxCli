@@ -8,6 +8,21 @@ headed by the release date. `0.1.0` is the earlier development milestone.
 
 ## [Unreleased]
 
+## [2026.10.01] (2)
+
+Second build of the day.
+
+### Changed
+- Dependencies: `dirs` 7, `md-5`/`sha1`/`sha2` 0.11 (one `digest` version
+  instead of two), `aes` 0.9 (cipher 0.5 API), `ruzstd` 0.9. The minimum
+  Rust version is 1.89 (required by `aes`).
+- CI: the fuzz-target compile check no longer uses `--locked`, so
+  dependency updates of the main lockfile do not fail it.
+- Configuration: `.env` only holds the user's own accounts — the
+  ScreenScraper member account (optional) and the RetroAchievements key.
+- Releases include `THIRD-PARTY-NOTICES.txt` (the licenses of the
+  libraries in the binary) and `LICENSE.md` states the terms of use.
+
 ## [2026.10.01]
 
 Fixes from the 2026-09-29 code audits (data safety, credential handling,
@@ -43,8 +58,7 @@ performance work and hardening found by fuzzing.
 - ROM mode scans sub-directories (depth 4, media and hidden folders
   skipped, no symlinked dirs); sheets and playlists resolve references
   relative to themselves, so multi-disc `.m3u` sets are one game.
-- Release job: CycloneDX SBOM and Sigstore-backed build-provenance/SBOM
-  attestations (`gh attestation verify`).
+- Release job: CycloneDX SBOM (`retrobox.cdx.json`) with every release.
 - RetroAchievements hashes for **every console rcheevos hashes**:
   - GameCube from `.iso`/`.gcm`/`.gcz`/`.ciso`/`.wbfs`/`.rvz`/`.wia`, Wii
     discs from the same containers, WiiWare `.wad`. Wii `.rvz`/`.wia`

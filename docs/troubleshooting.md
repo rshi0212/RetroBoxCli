@@ -35,8 +35,8 @@ GitHub 上没有可见的正式发布，或指定的 tag 不存在（tag 形如 
 
 ### `403 Erreur de login : Vérifier vos identifiants développeur !`
 
-开发者凭据错误。检查 `SS_DEVID`/`SS_DEVPASSWORD` 是否正确（注意不是会员账号）。
-运行 `retrobox auth check --env-file <path>` 验证。
+ScreenScraper 拒绝了程序级的访问凭据（与你的会员账号无关）。请先更新到最新版本（`retrobox -U`）；
+更新后仍出现时，请在 GitHub Issues 中反馈。
 
 ### `403 Erreur de login : ... identifiants utilisateurs !`
 
@@ -44,7 +44,8 @@ GitHub 上没有可见的正式发布，或指定的 tag 不存在（tag 形如 
 
 ### `426 Le logiciel de scrape utilisé a été blacklisté`
 
-`SS_SOFTNAME` 被拉黑。换成稳定、诚实的标识。
+ScreenScraper 拒绝了本程序的请求标识。请更新到最新版本（`retrobox -U`）；仍出现时请在 GitHub Issues
+中反馈。
 
 ## 配额类
 

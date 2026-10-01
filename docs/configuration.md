@@ -13,9 +13,6 @@
 
 | 变量 | 必需 | 说明 |
 |---|---|---|
-| `SS_DEVID` | 是* | ScreenScraper 开发者 ID。[论坛申请](https://www.screenscraper.fr/forumsujets.php?frub=12)。*纯 offline / dry-run 模式除外 |
-| `SS_DEVPASSWORD` | 是* | 开发者密码。**与速度/配额无关**，仅是 API 准入凭证 |
-| `SS_SOFTNAME` | 否 | 请求标识（默认 `retrobox`）。需诚实且稳定，违规会被拉黑（426） |
 | `SS_SSID` | 建议 | ScreenScraper 会员名，决定配额等级 |
 | `SS_SSPASSWORD` | 否 | 会员密码。匿名配额只有注册用户的 1/2 |
 | `RA_USERNAME` | 否 | RetroAchievements 用户名，仅在 `auth show` 中显示，请求不使用 |

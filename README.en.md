@@ -63,9 +63,7 @@ earlier run or the user wrote. `--report` lists them as `missing`.
 
 ```bash
 cat > .env << 'EOF'
-SS_DEVID=your_dev_id          # required (ScreenScraper developer account)
-SS_DEVPASSWORD=your_dev_password
-SS_SSID=your_member_name      # optional, sets your quota level
+SS_SSID=your_member_name      # optional ScreenScraper account, sets your quota level
 SS_SSPASSWORD=your_member_password
 RA_API_KEY=your_ra_web_api_key  # optional, needed for --ra-fill only
 EOF

@@ -66,11 +66,9 @@ retrobox --update-to v2026.10.01-7a20a85   # 安装指定版本（可安装旧�
 ## 快速开始
 
 ```bash
-# 1. 配置凭据（cp .env.example .env 并填写）
+# 1. 配置自己的账号（均为可选）
 cat > .env << 'EOF'
-SS_DEVID=你的开发者id          # 必需，论坛申请
-SS_DEVPASSWORD=你的开发者密码
-SS_SSID=你的会员名             # 可选，决定配额等级
+SS_SSID=你的会员名             # ScreenScraper 会员账号，决定配额等级；不填为匿名访问
 SS_SSPASSWORD=你的会员密码
 RA_API_KEY=你的RA_Web_API密钥   # 可选，--ra-fill 需要（--ra/--ra-only 不需要）
 EOF
@@ -283,7 +281,6 @@ ScreenScraper 的配额是三维的，全部由每次响应的 `ssuser` 块**动
 
 **关键事实**：
 - 每下载一张图/视频**各消耗 1 次配额**（1 游戏 6 类媒体 = 7 次请求）
-- dev 凭据 ≠ 限速等级；它只是 API 准入凭证（无 dev 账号的程序直接 403）
 - `retrobox quota` 用 `ssuserInfos.php`，**不消耗每日配额**
 - 错误码：429=退避重试（自动）；网络错误/5xx=有限次重试；430=当日耗尽（熔断，整次运行停止并保存进度）；431=未识别配额耗尽；401=服务器饱和；423=API 离线；403=凭据错误（401/403/423/426/430/431 均立即停止，退出码 3）
 - 并发：按账号 `maxthreads`（可用 `--threads` 调低）同时处理多个条目，每个请求在整个请求期间占用一个并发槽；每分钟上限由令牌桶控制（低配额账号同样可用）
@@ -300,7 +297,7 @@ ScreenScraper 的配额是三维的，全部由每次响应的 `ssuser` 块**动
 ```
 
 两种模式都使用响应缓存。缓存目录权限 0700、文件 0600，写入为原子操作。ScreenScraper 响应会回显
-请求 URL 并在媒体地址中附带凭据；这些参数（`devid`/`devpassword`/`ssid`/`sspassword`）在写入缓存前
+请求 URL 并在媒体地址中附带凭据；这些凭据参数（如 `ssid`/`sspassword`）在写入缓存前
 删除，下载媒体时才重新附加，且只附加到 `screenscraper.fr`（HTTPS）或所配置 API 源的地址上。
 早期版本写入的缓存条目在下次读取时自动清除凭据，`retrobox cache clear` 可立即全部删除。
 网络错误信息中不会出现请求 URL；重定向不会跨主机跟随。
