@@ -6,6 +6,10 @@
 - 未指定时按 `./.env` → `~/.config/retrobox/.env` 取第一个存在的文件，加载在环境变量**之下**
   （已 export 的变量优先）；文件格式错误会给出警告。
 - 凭据没有命令行参数（避免进入 shell 历史与 `ps`）。
+- `retrobox auth setup` 交互式录入账号并写入 `--env-file`、已加载的 `.env`，或（都没有时）
+  `~/.config/retrobox/.env`：只替换或追加这几个变量，其余行保留，文件权限 0600。在终端中运行需要
+  ScreenScraper 账号的命令（在线刮削、`quota`、`auth check`）而账号缺失时，会自动进入同一流程；
+  `--ra-fill` 缺少 `RA_API_KEY` 时只询问该 key。非交互环境（脚本、cron）从不提示，直接报错（退出码 2）。
 
 `auth show` 与 `doctor` 只显示账号名前两个字符，密码/密钥一律显示为 `***`。
 
@@ -13,8 +17,8 @@
 
 | 变量 | 必需 | 说明 |
 |---|---|---|
-| `SS_SSID` | 建议 | ScreenScraper 会员名，决定配额等级 |
-| `SS_SSPASSWORD` | 否 | 会员密码。匿名配额只有注册用户的 1/2 |
+| `SS_SSID` | 是 | ScreenScraper 账号名（[免费注册](https://www.screenscraper.fr/membreinscription.php)），决定配额等级。ScreenScraper 不接受没有账号的 API 请求 |
+| `SS_SSPASSWORD` | 是 | ScreenScraper 账号密码 |
 | `RA_USERNAME` | 否 | RetroAchievements 用户名，仅在 `auth show` 中显示，请求不使用 |
 | `RA_API_KEY` | `--ra-fill` 需要 | RA Web API key（[控制面板](https://retroachievements.org/controlpanel.php) → Web API Key）。`--ra-fill` 必需；`--ra`/`--ra-only` 不需要，配置后"有成就游戏列表"改由 Web API 获取，公开哈希库不可用时也由 Web API 按平台补上。不需要 RA 密码 |
 
@@ -22,7 +26,6 @@
 
 | 等级 | 每日请求 | 线程 |
 |---|---|---|
-| 匿名 | 10,000 | 1 |
 | 注册会员 | 20,000 | 1 |
 | 数据库贡献者 | 20,000+ | 最高 8 |
 | 捐赠（5€/月） | 100,000 | +1 |
@@ -34,6 +37,7 @@
 
 | 目录 | 用途 | 覆盖方式 |
 |---|---|---|
+| `~/.config/retrobox/.env` | 账号（`auth setup` 写入；当前目录有 `./.env` 时写入它），权限 0600 | `--env-file` |
 | `~/.config/retrobox/dats/` | DAT 文件：需从 No-Intro、Redump 等网站手工下载后放入（retrobox 目前不能自动下载或更新 DAT） | `--dat-dir` |
 | `~/.cache/retrobox/` | API 响应缓存 + DAT 摘要 + RA 哈希库 + ROM 文件哈希（0700/0600 权限；`--no-cache` 全部关闭） | `--cache-dir`（scrape 与 `cache stats/clear`）/ `$RETROBOX_CACHE_DIR` |
 | `roms/<platform>/` | 输出目标（gamelist.xml + 媒体） | `--roms-root` |
@@ -85,6 +89,6 @@
 |---|---|---|
 | 0 | 成功 | — |
 | 1 | 有未匹配 | 部分 DAT 条目/ROM 在 SS 不存在或查询失败（检查 `--ra-only` 是否过严） |
-| 2 | 环境错误 | 凭据缺失、目录不存在、参数错误、`--ra-only` 时 RA 索引加载失败、`-U`/`--update-to` 更新失败 |
-| 3 | 提前终止 | 430 当日配额耗尽 / 403 凭据被拒 / 431 未识别配额耗尽 / 401 非会员关闭 / 423 离线 / 426 拉黑；进度已保存，剩余平台不再处理 |
+| 2 | 环境错误 | 凭据缺失（缺少 ScreenScraper 账号且不在终端中运行，无法提示输入）、`auth setup` 不在终端中运行、目录不存在、参数错误、`--ra-only` 时 RA 索引加载失败、`-U`/`--update-to` 更新失败 |
+| 3 | 提前终止 | 430 当日配额耗尽 / 403 或 "Erreur de login" 凭据被拒（提示会指明是账号还是程序级凭据）/ 431 未识别配额耗尽 / 401 非会员关闭 / 423 离线 / 426 拉黑；进度已保存，剩余平台不再处理 |
 | 130 | Ctrl-C | 进行中的条目完成后保存进度并写 gamelist，之后可 `--resume` |

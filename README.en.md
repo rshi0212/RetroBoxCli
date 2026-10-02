@@ -51,8 +51,9 @@ Both modes **merge** into an existing `gamelist.xml` by `<path>`: only the
 fields retrobox writes are replaced; favorites, play counts, hand-edited
 fields, unknown tags and entries it did not process are kept. Writes are
 atomic and flushed to disk before the rename, so a power cut never leaves
-an empty or half-written file; a foreign gamelist is backed up once as `gamelist.xml.bak`, and an
-unparsable one is moved aside as `gamelist.xml.corrupt`.
+an empty or half-written file; a foreign gamelist is backed up once as
+`gamelist.xml.bak`, and an unparsable one is moved aside as
+`gamelist.xml.corrupt`.
 
 Games ScreenScraper does not find are recorded too: named after the RA
 title, the DAT name or the file, with RetroAchievements data when RA has
@@ -63,31 +64,37 @@ earlier run or the user wrote. `--report` lists them as `missing`.
 ## Quick start
 
 ```bash
-cat > .env << 'EOF'
-SS_SSID=your_member_name      # optional ScreenScraper account, sets your quota level
-SS_SSPASSWORD=your_member_password
-RA_API_KEY=your_ra_web_api_key  # optional, needed for --ra-fill only
-EOF
-
+retrobox auth setup                               # your accounts (asked once, checked, saved to .env)
 retrobox doctor                                   # environment self-check
 # DATs: download them yourself and put them into ~/.config/retrobox/dats/
 retrobox scrape dat --roms-root /userdata/roms --media box-2D,ss --resume
 retrobox scrape roms --roms-root ./roms --ra --report report.json
 ```
 
-Credentials are never taken from the command line (shell history, `ps`).
+A ScreenScraper account is required (free:
+<https://www.screenscraper.fr/membreinscription.php>; ScreenScraper refuses
+API requests without one). When none is configured, commands that need it
+ask for it in a terminal, check it and save it to `.env`; elsewhere they
+fail and point at `retrobox auth setup`. RetroAchievements is optional:
+`--ra`/`--ra-only` need no account, `--ra-fill` needs your Web API key
+(free account at <https://retroachievements.org>, key in the
+[control panel](https://retroachievements.org/controlpanel.php)); the RA
+password is never asked for. Accounts live in `./.env` (when it exists) or
+`~/.config/retrobox/.env`, readable only by you. Credentials are never
+taken from the command line (shell history, `ps`).
 
 ## Commands
 
 | Command | Purpose |
 |---|---|
-| `auth check` / `auth show` | validate credentials / show their source (masked) |
+| `auth setup` / `auth check` / `auth show` | enter or change your accounts (interactive) / validate them / show their source (masked) |
 | `quota [--json] [--watch N]` | live account quotas (does not use daily quota); `--watch` takes at least 1 second, and with `--json` prints one JSON object per refresh (with a `time` field) |
 | `systems list` / `map <dir\|id>` | Batocera dir ↔ ScreenScraper system id (an id maps to the platform's canonical dir) |
 | `dats scan` / `info` | inspect DAT files |
 | `scrape dat` / `scrape roms` | the two scrape modes |
 | `hash --system <dir> [--explain] <files…>` | crc32/md5/sha1 and the RetroAchievements hash of any file; `--explain` shows how the RA hash was computed |
-| `doctor`, `cache stats/clear`, `completion bash\|zsh\|fish` | utilities |
+| `doctor` | environment check: accounts (checked against the services), DAT dir, cache; reports only |
+| `cache stats/clear`, `completion bash\|zsh\|fish` | utilities |
 | `-U` / `--update-to <TAG>` | update to the latest / a specific release |
 
 Every command has `-h` (short) and `--help` (full, with examples).
@@ -97,6 +104,7 @@ Every command has `-h` (short) and `--help` (full, with examples).
 ```
 --media <LIST>        box-2D,box-2D-back,ss,ss-title,wheel,wheel-hd,marquee,
                       screenmarquee,video,manuel,fanart | none | all
+                      (default box-2D)
 --fields <LIST>       name,desc,year,publisher,developer,players,rating,genre
 --region-priority     default us,eu,jp,wor
 --ra                  tag games that have achievements (cheevosId)
@@ -108,7 +116,8 @@ Every command has `-h` (short) and `--help` (full, with examples).
                       review, games lacking requested media
 --threads <N>         cap concurrency (default: your account's maxthreads)
 --dry-run             no API calls, no files written
-scrape dat:  --dat-dir/--dat-file, --no-clones, --offline
+scrape dat:  --dat-dir/--dat-file, --no-clones, --offline (no ScreenScraper
+             calls or account; progress is not recorded, so --resume does nothing)
 scrape roms: --rename (canonical names, TorrentZip repack), --hash-only (no title search)
 ```
 
@@ -261,7 +270,7 @@ which RA console and hash rule a dir uses.
 |---|---|
 | 0 | success |
 | 1 | some entries unmatched or failed |
-| 2 | usage/environment error |
+| 2 | usage/environment error (including no ScreenScraper account where nobody can be asked, e.g. in a script) |
 | 3 | stopped early: quota, credentials, API closed/offline (progress saved) |
 | 130 | interrupted (Ctrl-C; progress saved) |
 

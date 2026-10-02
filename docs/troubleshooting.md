@@ -40,7 +40,21 @@ ScreenScraper 拒绝了程序级的访问凭据（与你的会员账号无关）
 
 ### `403 Erreur de login : ... identifiants utilisateurs !`
 
-会员凭据（`SS_SSID`/`SS_SSPASSWORD`）错误。清除这两行可回退匿名模式。
+ScreenScraper 账号（`SS_SSID`/`SS_SSPASSWORD`）错误或没有配置——ScreenScraper 不接受没有账号的
+请求。运行 `retrobox auth setup` 重新输入（当场验证），或在
+<https://www.screenscraper.fr/membreinscription.php> 免费注册。`retrobox doctor` 会指出被拒绝的是账号
+还是程序级凭据。
+
+### `no ScreenScraper account: run retrobox auth setup`
+
+没有配置 ScreenScraper 账号，且命令不在终端中运行（脚本、cron、管道），无法提示输入。先在终端中运行一次
+`retrobox auth setup`，或在 `.env` 中写入 `SS_SSID`/`SS_SSPASSWORD`。
+
+### `--ra-fill needs RA_API_KEY`
+
+`--ra-fill` 需要 RetroAchievements 的 Web API Key：在 <https://retroachievements.org> 免费注册，登录后
+在 <https://retroachievements.org/controlpanel.php> 复制 "Web API Key"，再运行 `retrobox auth setup`
+填入。`--ra`/`--ra-only` 不需要账号。
 
 ### `426 Le logiciel de scrape utilisé a été blacklisté`
 
@@ -57,7 +71,7 @@ gamelist，续跑状态已保存，退出码 3。次日用 `--resume` 从断点�
 - `--media none` 或减少媒体种类（每图/视频各耗 1 配额）
 - `--ra-only` 过滤掉不需要的条目
 - `--offline` 生成无媒体骨架
-- 贡献数据库或[捐赠](https://www.screenscraper.fr)提升等级
+- 贡献数据库或[捐赠](https://www.screenscraper.fr)提升等级（`retrobox auth setup` 可改用其他账号）
 
 ### `431 Faite du tri dans vos fichiers roms`
 
@@ -67,7 +81,8 @@ gamelist，续跑状态已保存，退出码 3。次日用 `--resume` 从断点�
 ### `401 API fermé pour les non membres`
 
 服务器 CPU > 60% 时对非会员关闭。retrobox 立即停止（退出码 3，进度已保存），稍后
-`--resume` 重试；注册会员可缓解。423（API 离线）同理。
+`--resume` 重试。retrobox 的请求总是带着你的 ScreenScraper 账号；仍出现时用 `retrobox doctor`
+确认账号已配置并被接受。423（API 离线）同理，稍后重试。
 
 ## 匹配类
 

@@ -72,10 +72,11 @@ chmod a+rx ~/.local/bin/retrobox
 
 ```bash
 retrobox --version
-retrobox doctor        # 检查凭据、API 连通性、DAT 目录与缓存目录
+retrobox auth setup    # 录入账号：ScreenScraper（必需，当场验证）与 RetroAchievements（可选）
+retrobox doctor        # 检查账号、API 连通性、DAT 目录与缓存目录
 ```
 
-配置凭据见 [README 快速开始](../README.md#快速开始) 与 [配置参考](configuration.md)。
+账号说明见 [README 快速开始](../README.md#快速开始) 与 [配置参考](configuration.md)。
 
 ### 校验下载文件（可选）
 

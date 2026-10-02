@@ -8,6 +8,36 @@ headed by the release date. `0.1.0` is the earlier development milestone.
 
 ## [Unreleased]
 
+## [2026.10.02] (2)
+
+Second build of the day: account setup.
+
+### Added
+- `retrobox auth setup`: enter or change your accounts in a terminal. The
+  ScreenScraper account is required and checked before it is saved; the
+  RetroAchievements user name and Web API key are optional (skipping the
+  key shows where to get one; the RA password is never asked for). Values
+  go into the loaded `.env` (or `~/.config/retrobox/.env`), other lines
+  are kept, the file is readable only by you.
+- Commands that need ScreenScraper (online scrapes, `quota`, `auth check`)
+  run the same setup when no account is configured, in a terminal; in
+  scripts they stop with exit code 2 and point at `retrobox auth setup`.
+  `--ra-fill` asks for a missing RetroAchievements key.
+
+### Changed
+- The ScreenScraper account is documented as required: ScreenScraper
+  refuses API requests without one, so runs without it used to stop with
+  "credentials rejected" (exit 3).
+- `doctor` reports a missing ScreenScraper account as a failure with the
+  way to fix it, skips the API check without one, says which credentials
+  ScreenScraper refused (your account, or the developer pair: update with
+  `-U`), notes the optional RetroAchievements key and checks it when set.
+- Login errors name the refused credentials (account or developer pair).
+- `--help` setup steps start with `retrobox auth setup`; the docs describe
+  the account setup, `doctor`, the cache layout (RA game lists included),
+  `--offline` (no account needed, no resume state) and how the rare DAT
+  conflicts are settled.
+
 ## [2026.10.02]
 
 Fixes from the 2026-10-02 code audits.

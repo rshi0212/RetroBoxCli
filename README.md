@@ -66,12 +66,8 @@ retrobox --update-to v2026.10.01-7a20a85   # 安装指定版本（可安装旧�
 ## 快速开始
 
 ```bash
-# 1. 配置自己的账号（均为可选）
-cat > .env << 'EOF'
-SS_SSID=你的会员名             # ScreenScraper 会员账号，决定配额等级；不填为匿名访问
-SS_SSPASSWORD=你的会员密码
-RA_API_KEY=你的RA_Web_API密钥   # 可选，--ra-fill 需要（--ra/--ra-only 不需要）
-EOF
+# 1. 录入账号：ScreenScraper 账号（必需，免费注册）当场验证；RetroAchievements 可选，回车跳过
+retrobox auth setup
 
 # 2. 环境自检
 retrobox doctor
@@ -84,10 +80,20 @@ retrobox scrape dat --roms-root /userdata/roms --media box-2D,ss --resume
 retrobox scrape roms --roms-root ./roms --ra-fill
 ```
 
+**账号**：ScreenScraper 账号是必需的（ScreenScraper 不接受没有账号的 API 请求），在
+<https://www.screenscraper.fr/membreinscription.php> 免费注册。没有配置时，在终端中运行需要它的命令
+（在线刮削、`quota`、`auth check`）会先提示输入并验证，再保存到 `.env`；脚本等非交互环境下则报错并
+提示运行 `retrobox auth setup`。RetroAchievements 账号可选：`--ra`/`--ra-only` 不需要，`--ra-fill`
+需要 Web API Key（[RA 官网](https://retroachievements.org)免费注册后在
+[控制面板](https://retroachievements.org/controlpanel.php)复制），不需要也不保存 RA 密码。账号保存在
+`./.env`（已存在时）或 `~/.config/retrobox/.env`，文件权限 0600；也可以手工编辑，变量见
+[配置参考](docs/configuration.md)。
+
 ## 命令总览
 
 | 命令 | 说明 |
 |---|---|
+| `auth setup` | 录入或修改账号（交互式）：ScreenScraper 账号必填并当场验证，RetroAchievements 可选；保存到 `.env` |
 | `auth check` | 校验凭据，显示账号等级/线程/配额 |
 | `auth show` | 显示当前凭据来源（密码打码） |
 | `quota [--json] [--watch N]` | 实时配额面板（不消耗每日配额）；`--watch` 至少 1 秒，与 `--json` 同用时每次刷新输出一行 JSON（含 `time` 字段） |
@@ -96,8 +102,8 @@ retrobox scrape roms --roms-root ./roms --ra-fill
 | `scrape dat` | 纯 DAT 模式刮削 |
 | `scrape roms` | 纯 ROM 模式 |
 | `hash --system <dir> <文件或文件夹>…` | 显示 retrobox 为文件计算的 crc32/md5/sha1 与 RetroAchievements 哈希（排查"RA 匹配不上"；`--explain` 逐步说明哈希是怎么算出来的，`--json` 输出） |
-| `doctor` | 环境自检（.env/凭据/API/DAT 目录/缓存） |
-| `cache stats` / `clear` | 响应缓存管理 |
+| `doctor` | 环境自检：账号（ScreenScraper 必需、RetroAchievements 可选，均实际验证）、DAT 目录、缓存；只报告，不修改 |
+| `cache stats` / `clear` | 缓存统计 / 清除（API 响应、DAT 摘要、RA 数据、ROM 哈希） |
 | `completion bash\|zsh\|fish` | Shell 补全脚本 |
 | `-U` / `--update-to <TAG>` | 更新到最新版本 / 指定版本（见 [docs/installation.md](docs/installation.md#更新)） |
 
@@ -110,7 +116,8 @@ retrobox scrape roms --roms-root ./roms --ra-fill
 ```
 --media <LIST>            媒体类型：box-2D,box-2D-back,ss,ss-title,wheel,wheel-hd,
                           marquee,screenmarquee,video,manuel,fanart
-                          none=纯信息 / all=box-2D,ss,wheel,marquee（未知类型直接报错）
+                          默认 box-2D；none=纯信息 / all=box-2D,ss,wheel,marquee
+                          （未知类型直接报错）
 --max-width/--max-height  服务端缩放图片（mediaJeu.php）
 --fields <LIST>           XML 字段选择：name,desc,year,publisher,developer,
                           players,rating,genre 或 all/none
@@ -128,7 +135,8 @@ retrobox scrape roms --roms-root ./roms --ra-fill
 --threads <N>             最大并发请求数（1-32，默认且不超过账号 maxthreads）
 --dry-run                 预览：不请求 API、不创建目录、不写缓存
 --offline                 （仅 dat 模式）零 ScreenScraper 调用，纯 DAT 元数据生成 gamelist
-                          （如同时指定 --ra/--ra-only/--ra-fill，仍会访问 RetroAchievements）
+                          （如同时指定 --ra/--ra-only/--ra-fill，仍会访问 RetroAchievements）；
+                          不需要 ScreenScraper 账号，不记录续跑进度（--resume 无效果）
 ```
 
 `--system` 只接受平台目录名（如 `nes`），拒绝绝对路径、`..` 与路径分隔符。
@@ -207,7 +215,9 @@ clone 条目用 `cloneof` 属性写明其 parent 游戏（`--no-clones` 据此�
      街机平台（`mame`/`fbneo`/`fba`/`arcade`）的游戏以集合名为准，只按路径合并——merged 父集包含
      clone 的 ROM，不能因此丢掉 split/non-merged 中的 clone；
    - 同一个 DAT 内的条目全部保留（街机 clone 可能共用 ROM）；
-   - 结果与 DAT 的读取顺序无关。
+   - 结果不受 DAT 读取顺序影响；只有同一路径在两个 DAT 中给出不同的校验值、或同一校验值在两个 DAT
+     中路径不同（都极少见）时，保留先读到的那个：扫描 DAT 目录时按文件路径排序读取，`--dat-file`
+     按给出的顺序读取——同样的 DAT 每次运行结果相同。
 4. 每次选择都会输出一行说明（使用哪个 DAT、跳过哪个、原因，或哪些 DAT 并列使用）。
 
 No-Intro 与 Redump 的平台 DAT 本身已包含 Aftermarket、Unlicensed、Pirate 等条目（例如 Game Boy
@@ -278,7 +288,7 @@ ScreenScraper 的配额是三维的，全部由每次响应的 `ssuser` 块**动
 |---|---|
 | `maxthreads` | 最大并发（基础 1，贡献者最高 8，捐赠 +1/+5） |
 | `maxrequestspermin` | 每分钟上限（注意：官方 FAQ 的 threads×50 公式已过时，实际约为 1024×(threads+1)，以 API 返回为准） |
-| `maxrequestsperday` | 每日总量（匿名 1 万 / 注册 2 万 / 赞助 5–10 万），**CET 午夜重置** |
+| `maxrequestsperday` | 每日总量（注册 2 万 / 赞助 5–10 万），**CET 午夜重置** |
 | `maxrequestskoperday` | 每日"未识别 ROM"配额（独立计数，约为总量 1/10，hack/汉化库易触顶） |
 | `maxdownloadspeed` | 下载限速（免费 128 KB/s） |
 
@@ -296,6 +306,7 @@ ScreenScraper 的配额是三维的，全部由每次响应的 `ssuser` 块**动
 ├── api/*.miss          未找到标记（TTL 24h，重跑不重复烧未识别配额）
 ├── datparse2/...       DAT 摘要（完整路径+mtime+size 键控），未改动的 DAT 再次扫描时直接取用
 ├── ra/hashlibrary.json RA 公开哈希库（TTL 24h）
+├── ra/games-<主机>.json 各主机"有成就游戏"列表（TTL 24h）
 └── hashes/...          ROM 模式的文件哈希缓存（每个平台目录一个文件）
 ```
 
@@ -445,7 +456,7 @@ retrobox 的平台与 Batocera 一致（约 150 个可刮削平台：主机、�
 |---|---|
 | 0 | 全部成功 |
 | 1 | 部分未匹配（有条目未刮到或查询失败） |
-| 2 | 参数/环境错误 |
+| 2 | 参数/环境错误（含缺少 ScreenScraper 账号而又无法提示输入，如在脚本中运行） |
 | 3 | 配额耗尽 / 凭据被拒 / API 关闭或离线，提前终止（进度与 gamelist 已保存，可 `--resume` 续跑） |
 | 130 | Ctrl-C 中断（第一次 Ctrl-C 会完成进行中的条目并保存进度；再按一次立即退出） |
 
