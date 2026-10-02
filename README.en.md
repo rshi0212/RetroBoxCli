@@ -50,7 +50,8 @@ uninstalling) are in [docs/installation.md](docs/installation.md) (Chinese).
 Both modes **merge** into an existing `gamelist.xml` by `<path>`: only the
 fields retrobox writes are replaced; favorites, play counts, hand-edited
 fields, unknown tags and entries it did not process are kept. Writes are
-atomic; a foreign gamelist is backed up once as `gamelist.xml.bak`, and an
+atomic and flushed to disk before the rename, so a power cut never leaves
+an empty or half-written file; a foreign gamelist is backed up once as `gamelist.xml.bak`, and an
 unparsable one is moved aside as `gamelist.xml.corrupt`.
 
 Games ScreenScraper does not find are recorded too: named after the RA
@@ -81,7 +82,7 @@ Credentials are never taken from the command line (shell history, `ps`).
 | Command | Purpose |
 |---|---|
 | `auth check` / `auth show` | validate credentials / show their source (masked) |
-| `quota [--json] [--watch N]` | live account quotas (does not use daily quota) |
+| `quota [--json] [--watch N]` | live account quotas (does not use daily quota); `--watch` takes at least 1 second, and with `--json` prints one JSON object per refresh (with a `time` field) |
 | `systems list` / `map <dir\|id>` | Batocera dir ↔ ScreenScraper system id (an id maps to the platform's canonical dir) |
 | `dats scan` / `info` | inspect DAT files |
 | `scrape dat` / `scrape roms` | the two scrape modes |
@@ -98,7 +99,7 @@ Every command has `-h` (short) and `--help` (full, with examples).
                       screenmarquee,video,manuel,fanart | none | all
 --fields <LIST>       name,desc,year,publisher,developer,players,rating,genre
 --region-priority     default us,eu,jp,wor
---ra                  tag games that have achievements (cheevosId/cheevosHash)
+--ra                  tag games that have achievements (cheevosId)
 --ra-only             like --ra, and scrape only games that have achievements
 --ra-fill             like --ra, and fill metadata and art from RA (needs RA_API_KEY)
 --resume              skip entries done in the previous run
@@ -133,8 +134,8 @@ state and exits with code 3; `--resume` continues later.
 
 | Option | Effect | RA account |
 |---|---|---|
-| `--ra` | writes `cheevosId` (RA game id) and `cheevosHash` for games that have achievements, so the frontend shows them | not needed |
-| `--ra-only` | like `--ra`, and scrapes only games that have achievements | not needed |
+| `--ra` | writes `cheevosId` (RA game id) for games that have achievements, so the frontend shows them | not needed |
+| `--ra-only` | like `--ra`, and scrapes only games that have achievements; a platform without any is skipped (no gamelist written) | not needed |
 | `--ra-fill` | like `--ra`, and fills publisher/developer/genre/year and box art / title screens from RA where ScreenScraper has none | `RA_API_KEY` |
 
 A file matches when its RA hash is in RA's hash library **and** the game
@@ -146,6 +147,11 @@ and a key is set). Only `--ra-fill` requires `RA_API_KEY` (RA control
 panel → Web API Key); requests use only the key, `RA_USERNAME` is optional
 and the RA password is never needed. `--ra-v1` from earlier versions still
 works and means `--ra`.
+
+`cheevosHash` (the RA hash) does not depend on these options: it is written
+for every entry whose RA hash retrobox can compute correctly (from the file
+in ROM mode, from a usable DAT md5 in DAT mode), achievements or not, and
+left out otherwise — never a wrong hash.
 
 ### Getting DATs
 
@@ -215,7 +221,9 @@ compressions), WiiWare `.wad`, 3DS `.3ds`/`.cci`/`.cia`/`.3dsx`, PS3 `.iso`,
   emulators' `sysdata` folders). No keys ship with retrobox; without keys no
   hash is written (never a wrong one).
 - DAT mode can use DAT md5s only where the RA hash is the ROM md5; disc
-  platforms and NDS need the actual files (`scrape roms`).
+  platforms and NDS need the actual files (`scrape roms`). Headered DATs
+  (No-Intro NES) and the Nintendo 64 `(ByteSwapped)`/`(LittleEndian)` DATs
+  list md5s of other bytes than rcheevos hashes: no `cheevosHash` for those.
 
 When a hash does not match RetroAchievements, run
 `retrobox hash --system <dir> --explain <file>` and compare with the hashes

@@ -162,7 +162,9 @@ ssid），核对后手工修正即可。hack/汉化合集建议直接加 `--hash
      （Dolphin 默认、`wit copy --raw`）重新生成；
    - Dreamcast `.cdi` 多为自制的 selfboot 转换版：转换时通常会修改 IP.BIN 或重排、压缩数据，
      内容与 GD-ROM 原盘不同。RA 网站没有登记该版本时，哈希对不上是正常的，请改用 GDI/CHD 原盘
-4. DAT 模式无法得到光盘平台与 NDS 的 RA 哈希（需要实际文件）——对这些平台用 `scrape roms`
+4. DAT 模式无法得到光盘平台与 NDS 的 RA 哈希（需要实际文件）——对这些平台用 `scrape roms`；
+   带文件头的 DAT（No-Intro "Headered" NES）与 N64 的 `(ByteSwapped)`/`(LittleEndian)` DAT 列出的 md5
+   也不是 RA 哈希，这些条目不写 `cheevosHash`（N64 请改用 `(BigEndian)` DAT，或用 `scrape roms`）
 5. arcade = 集合名 md5（如 `md5("mslug")`）；FBNeo 子系统目录下为 `md5("nes_x")` 形式
 6. 游戏在 RA 登记了但没有成就：`hash` 能算出哈希、RA 网站也能查到该游戏，但 gamelist 中只有
    `cheevosHash` 没有 `cheevosId`，`--ra-only` 也会跳过它——这是预期行为，没有成就的游戏不需要

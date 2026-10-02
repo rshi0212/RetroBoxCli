@@ -8,6 +8,44 @@ headed by the release date. `0.1.0` is the earlier development milestone.
 
 ## [Unreleased]
 
+## [2026.10.02]
+
+Fixes from the 2026-10-02 code audits.
+
+### Fixed
+- The DAT summary cache was never written (its directory was not
+  created), so `dats scan` and DAT discovery re-parsed every DAT on every
+  run; `cache stats`/`clear` now include it. The unused `datparse/`
+  directory of earlier versions is removed.
+- DAT mode: Nintendo 64 `(ByteSwapped)`/`(LittleEndian)` DATs no longer
+  give a `cheevosHash` — their md5s are of byte-swapped files, while
+  rcheevos hashes the big-endian order.
+- gamelist.xml: control characters in scraped text (forbidden in XML) are
+  left out; written as is, they made the next run move the whole file
+  aside as `gamelist.xml.corrupt`.
+- gamelist.xml, resume state and `--report` are flushed to disk before
+  the atomic rename, so a power cut cannot leave an empty file.
+- WIA/RVZ: corrupt group tables can no longer make retrobox allocate
+  several GiB (stored and packed group sizes are bounded by the file and
+  the group size).
+- `doctor` masks the member account name like `auth show`.
+- DAT mode: entries whose path leaves the platform dir (`..`, absolute
+  paths) are left out with a warning instead of being written to
+  gamelist.xml.
+- An empty zip no longer gets the archive's own md5 as `cheevosHash`.
+- A ScreenScraper answer that merely contains the words "Erreur de login"
+  (in a game's text) is no longer taken for refused credentials.
+- `--ra-only` (DAT mode): a platform left without entries is skipped
+  instead of getting an empty gamelist.xml.
+
+### Changed
+- `quota --json --watch` prints one JSON object per line (with a `time`
+  field) instead of mixing in timestamp lines; `--watch` must be at least
+  1 second (0 was silently treated as 1).
+- Docs: `cheevosHash` is written whenever the RA hash can be computed;
+  `--ra` adds `cheevosId`. The release assets list includes
+  `THIRD-PARTY-NOTICES.txt`.
+
 ## [2026.10.01] (2)
 
 Second build of the day.

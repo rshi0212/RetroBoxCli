@@ -29,7 +29,7 @@ ScreenScraper + RetroAchievements ROM 刮削 CLI，输出 Batocera 风格的 `ro
 
 **不会覆盖已有数据**：写 `gamelist.xml` 时与现有文件按 `<path>` 合并——只替换 retrobox
 本次写出的字段，`favorite`/`playcount`/`lastplayed`/手工编辑的字段、未知标签以及本次未处理的
-条目全部保留；原子写入（临时文件 + rename），首次改写非 retrobox 生成的文件时保留
+条目全部保留；原子写入（临时文件写入并落盘后 rename，写入中途断电也不会留下空文件或半个文件），首次改写非 retrobox 生成的文件时保留
 `gamelist.xml.bak`，无法解析的旧文件改名为 `gamelist.xml.corrupt` 而不是被覆盖。
 
 **如实记录**：ScreenScraper 没有找到的游戏（包括 SS 标为非游戏的条目）同样写入 `gamelist.xml`——
@@ -90,7 +90,7 @@ retrobox scrape roms --roms-root ./roms --ra-fill
 |---|---|
 | `auth check` | 校验凭据，显示账号等级/线程/配额 |
 | `auth show` | 显示当前凭据来源（密码打码） |
-| `quota [--json] [--watch N]` | 实时配额面板（不消耗每日配额） |
+| `quota [--json] [--watch N]` | 实时配额面板（不消耗每日配额）；`--watch` 至少 1 秒，与 `--json` 同用时每次刷新输出一行 JSON（含 `time` 字段） |
 | `systems list` / `map <目录或ID>` | Batocera 目录名 ↔ ScreenScraper 系统 ID 对照（按 ID 查询时给出该平台的规范目录名） |
 | `dats scan` / `info` | DAT 目录扫描（条目数/格式/系统识别） |
 | `scrape dat` | 纯 DAT 模式刮削 |
@@ -115,7 +115,7 @@ retrobox scrape roms --roms-root ./roms --ra-fill
 --fields <LIST>           XML 字段选择：name,desc,year,publisher,developer,
                           players,rating,genre 或 all/none
 --region-priority         名称/日期/媒体的区域优先级（默认 us,eu,jp,wor）
---ra                      为有成就的游戏写入 RetroAchievements 标识（cheevosId/cheevosHash）
+--ra                      为有成就的游戏写入 RetroAchievements 游戏 ID（cheevosId）
 --ra-only                 同 --ra，且只刮有成就的游戏，其余条目跳过
 --ra-fill                 同 --ra，且用 RA 资料补全空缺字段与封面/标题画面（需要 RA_API_KEY）
 --no-cache                不用响应缓存
@@ -176,6 +176,9 @@ clone 条目用 `cloneof` 属性写明其 parent 游戏（`--no-clones` 据此�
 - 头部声明 `forcepacking="zip"`（FinalBurn Neo）时，路径为 `<游戏名>.zip`；否则为 DAT 中的 ROM 文件名。
 - DAT 中带文件头的条目（No-Intro "Headered" NES DAT 等）的 md5 不是 RA 哈希；同一路径在无头 DAT 中
   也有时取后者的 RA 哈希，否则不写 `cheevosHash`。
+- N64 的 `(ByteSwapped)`/`(LittleEndian)` DAT 列出的是字节交换后的文件，md5 不是 RA 哈希（rcheevos 按
+  `.z64` 字节序计算），这些条目不写 `cheevosHash`；`(BigEndian)` DAT 的 md5 就是 RA 哈希。
+- 路径会离开平台目录的条目（含 `..` 或绝对路径）不写入 gamelist，并给出警告。
 - Redump 多轨条目取最大数据轨的哈希、路径优先用 `.cue`。
 
 **同一平台目录有多个 DAT 时**，按 DAT 身份区分。身份 = 来源 + 头部名称，名称中只去掉
@@ -291,7 +294,7 @@ ScreenScraper 的配额是三维的，全部由每次响应的 `ssuser` 块**动
 ~/.cache/retrobox/
 ├── api/<sha1>.json     成功响应（TTL 7 天）
 ├── api/*.miss          未找到标记（TTL 24h，重跑不重复烧未识别配额）
-├── datparse/...        `dats scan` 的 DAT 摘要（完整路径+mtime+size 键控；刮削只读 DAT 头部）
+├── datparse2/...       DAT 摘要（完整路径+mtime+size 键控），未改动的 DAT 再次扫描时直接取用
 ├── ra/hashlibrary.json RA 公开哈希库（TTL 24h）
 └── hashes/...          ROM 模式的文件哈希缓存（每个平台目录一个文件）
 ```
@@ -310,14 +313,17 @@ ScreenScraper 的配额是三维的，全部由每次响应的 `ssuser` 块**动
 
 | 选项 | 作用 | 需要 RA 账号 |
 |---|---|---|
-| `--ra` | 为有成就的游戏写入 `cheevosId`（RA 游戏 ID）与 `cheevosHash`（RA 哈希），前端据此显示成就 | 否 |
-| `--ra-only` | 同 `--ra`，且只刮有成就的游戏；没有成就的条目不查询 ScreenScraper、不写入 gamelist | 否 |
+| `--ra` | 为有成就的游戏写入 `cheevosId`（RA 游戏 ID），前端据此显示成就 | 否 |
+| `--ra-only` | 同 `--ra`，且只刮有成就的游戏；没有成就的条目不查询 ScreenScraper、不写入 gamelist；平台中一个有成就的条目都没有时整个平台跳过，不生成 gamelist | 否 |
 | `--ra-fill` | 同 `--ra`，且在 ScreenScraper 缺少时用 RA 资料补全发行商/开发商/类型/年份，并以 RA 封面/标题画面作为媒体回退 | `RA_API_KEY` |
 
 匹配方式：retrobox 按 rcheevos 规则计算每个文件的 RA 哈希（见下表），在 RA 哈希库中查到对应
 游戏后，再确认该游戏**有成就**——RA 也登记了大量没有成就的游戏（例如 SNES 登记 2831 个，其中
 1184 个有成就），这些游戏不写 `cheevosId`，也会被 `--ra-only` 过滤。每个平台的"有成就游戏"
 列表在运行开始时加载一次。
+
+`cheevosHash`（RA 哈希）与这三个选项无关：只要 retrobox 能算出正确的 RA 哈希（ROM 模式由文件计算，
+DAT 模式取可用的 DAT md5），每个条目都会写入，不论该游戏是否有成就；算不出时不写（不会写错误的哈希）。
 
 数据来源自动选择，结果相同：
 
@@ -454,7 +460,7 @@ SBOM（`retrobox.cdx.json`，列出编译进程序的全部依赖）。下载后
 sha256sum --check --ignore-missing SHA256SUMS
 ```
 
-`retrobox -U` 在替换前自动执行 SHA-256 校验。预编译版本免费使用；源代码暂未公开，问题与建议请在
+Release 还附有 `THIRD-PARTY-NOTICES.txt`（编译进程序的第三方库许可证）。`retrobox -U` 在替换前自动执行 SHA-256 校验。预编译版本免费使用；源代码暂未公开，问题与建议请在
 GitHub Issues 中反馈。
 
 ## 试用与反馈

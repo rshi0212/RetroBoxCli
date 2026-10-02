@@ -15,8 +15,9 @@ retrobox 以单个可执行文件发布，下载后放入 `PATH` 中的目录即
 | 文件 | 内容 |
 |---|---|
 | `retrobox` | Linux x86_64 可执行文件 |
-| `SHA256SUMS` | `retrobox` 与 `retrobox.cdx.json` 的 SHA-256 校验和 |
+| `SHA256SUMS` | `retrobox`、`retrobox.cdx.json` 与 `THIRD-PARTY-NOTICES.txt` 的 SHA-256 校验和 |
 | `retrobox.cdx.json` | CycloneDX 格式的 SBOM（依赖清单） |
+| `THIRD-PARTY-NOTICES.txt` | 编译进程序的第三方库的许可证 |
 
 最新版本的固定下载地址为：
 
